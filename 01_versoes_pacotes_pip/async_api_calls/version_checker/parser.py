@@ -28,7 +28,11 @@ class Version(NamedTuple):
     patch: Optional[int] = None
 
     def __str__(self) -> str:
-        return f"{self.major}.{self.minor or '?'}.{self.patch or '?'}"
+        return "{x}.{y}.{z}".format(
+            x=self.major,
+            y=self.minor if self.minor is not None else '*',
+            z=self.patch if self.patch is not None else '*',
+        )
     
 
 class Package:
