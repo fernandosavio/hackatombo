@@ -41,10 +41,9 @@ def get_options():
 def main():
     opts = get_options()
 
-    for package in Package.from_file(opts.file):
-        print(package)
-
-    opts.file.close()
+    with opts.file as file:
+        for package in Package.from_file(file):
+            print(package)
 
 
 if __name__ == '__main__':
