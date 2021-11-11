@@ -57,7 +57,8 @@ class Package:
     def parse(cls, string: str) -> 'Package':
         """
         Parses a requirements.txt line and returns a Package objects with
-        version=None in case no version is found.
+        version=None in case no version is found or version especifier is
+        other than '=='.
         """
         match = regex_version.search(string)
 
