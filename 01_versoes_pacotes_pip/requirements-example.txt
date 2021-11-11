@@ -1,0 +1,11 @@
+
+pandas==1.3.0
+numpy
+redis>=3.5.2
+matplotlib
+Flask==2.0.0
+requests==2.25.1
+uvicorn[standard]
+fastapi[orjson]==0.70
+
+beautifulsoup4==4.9.1
