@@ -64,12 +64,24 @@ class Package:
         version=None in case no version is found or version especifier is
         other than '=='.
         """
+        string = string.strip()
+
+        if (
+            not string  # ignore empty lines
+            or string.startswith('#')  # ignore comments
+            or string.startswith('-r')  # ignore imports
+        ):
+            return None
+
         match = regex_version.search(string)
 
         if not match:
-            raise ValueError("Invalid string.")
+            return None
         
-        _version = match.group('major', 'minor', 'patch')
+        _version = tuple(
+            int(x) if x is not None else None 
+            for x in match.group('major', 'minor', 'patch')
+        )
 
         return Package(
             name=match.group('package'),
@@ -82,10 +94,9 @@ class Package:
         Parses a text buffer and yields Package objects ignoring comment lines.
         """
         for line in file:
-            line: str = line.strip()
-            
-            if not line or line.startswith('#'):
-                # ignore empty lines and comments
+            package = cls.parse(line)
+
+            if package is None:
                 continue
-            
-            yield cls.parse(line)
+
+            yield package
