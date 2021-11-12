@@ -1,5 +1,6 @@
 from io import StringIO
 import pytest
+
 from ..version_checker.parser import Package, Version
 
 
