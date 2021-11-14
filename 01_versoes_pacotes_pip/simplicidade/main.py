@@ -128,13 +128,20 @@ def get_api_info(package_name):
         for x in data['info']['version'].split('.', maxsplit=2)
     )
 
+def is_updated(current, latest):
+    if -1 in current:
+        return False
+    
+    return current >= latest
+
 
 def print_formatted_results(results, name_columns_size):
+    name_columns_size = max(name_columns_size, 7)
     version_column_size = 11
-    name_filler = "─" * name_columns_size
-    version_filler = "─" * version_column_size
+    _n = "─" * name_columns_size
+    _v = "─" * version_column_size
 
-    print("┌" + name_filler + "┬" + version_filler + "┬" + version_filler + "┐")
+    print("┌" + _n + "┬" + _v + "┬" + _v + "┬" + _v + "┐")
     print(
         "│" 
         + "Package".center(name_columns_size) 
@@ -143,9 +150,13 @@ def print_formatted_results(results, name_columns_size):
         + "│"
         + "Latest".center(version_column_size)
         + "│"
+        + "Updated".center(version_column_size)
+        + "│"
     )
-    print("├" + name_filler + "┼" + version_filler + "┼" + version_filler + "┤")
-    for package, version, api_version in results:
+    print(
+        "├" + _n + "┼" + _v + "┼" + _v + "┼" + _v + "┤"
+    )
+    for package, version, api_version, updated in results:
         package: str
         print(
             "│" 
@@ -163,8 +174,10 @@ def print_formatted_results(results, name_columns_size):
                 c='?' if api_version[2] == -1 else api_version[2],
             ).center(11)
             + "│"
+            + ("✓" if updated else "✗").center(version_column_size)
+            + "│"
         )
-    print("└" + name_filler + "┴───────────┴───────────┘")
+    print("└" + _n + "┴" + _v + "┴" + _v + "┴" + _v + "┘")
 
 
 def main(filepath: Path):
@@ -184,7 +197,12 @@ def main(filepath: Path):
             current_version = get_api_info(package)
             
             results.append(
-                (package, version, current_version)
+                (
+                    package, 
+                    version, 
+                    current_version, 
+                    is_updated(version, current_version),
+                )
             )
         print_formatted_results(results, max_name_size)
 
