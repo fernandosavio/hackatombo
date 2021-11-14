@@ -1,7 +1,10 @@
-from os import X_OK, openpty
+from os import name
 import sys
+
 from pathlib import Path
 from typing import Optional, Tuple
+
+import requests
 
 
 Version = Tuple[int, int, int]
@@ -109,8 +112,66 @@ def extract_line_info(line: str) -> Optional[Tuple[str, Version]]:
     return name.strip(), tuple(version)
 
 
+def get_api_info(package_name):
+    url = f'https://pypi.org/pypi/{package_name}/json'
+    
+    response = requests.get(url)
+
+    if response.status_code >= 400:
+        print(f'Erro ao acessar url "{url}"')
+        return None
+    
+    data = response.json()
+    
+    return tuple(
+        int(x) 
+        for x in data['info']['version'].split('.', maxsplit=2)
+    )
+
+
+def print_formatted_results(results, name_columns_size):
+    version_column_size = 11
+    name_filler = "─" * name_columns_size
+    version_filler = "─" * version_column_size
+
+    print("┌" + name_filler + "┬" + version_filler + "┬" + version_filler + "┐")
+    print(
+        "│" 
+        + "Package".center(name_columns_size) 
+        + "│" 
+        + "Current".center(version_column_size)
+        + "│"
+        + "Latest".center(version_column_size)
+        + "│"
+    )
+    print("├" + name_filler + "┼" + version_filler + "┼" + version_filler + "┤")
+    for package, version, api_version in results:
+        package: str
+        print(
+            "│" 
+            + package.ljust(name_columns_size) 
+            + "│"
+            + "{a}.{b}.{c}".format(
+                a='?' if version[0] == -1 else version[0],
+                b='?' if version[1] == -1 else version[1],
+                c='?' if version[2] == -1 else version[2],
+            ).center(11)
+            + "│"
+            + "{a}.{b}.{c}".format(
+                a='?' if api_version[0] == -1 else api_version[0],
+                b='?' if api_version[1] == -1 else api_version[1],
+                c='?' if api_version[2] == -1 else api_version[2],
+            ).center(11)
+            + "│"
+        )
+    print("└" + name_filler + "┴───────────┴───────────┘")
+
+
 def main(filepath: Path):
     with filepath.open(mode='r', encoding='utf8') as file:
+        results = []
+        max_name_size = 0
+
         for line in file:
             result = extract_line_info(line)
 
@@ -118,13 +179,14 @@ def main(filepath: Path):
                 continue
             
             package, version = result
+            max_name_size = max(max_name_size, len(package))
+
+            current_version = get_api_info(package)
             
-            print("{package} ({a}.{b}.{c})".format(
-                package=package,
-                a='*' if version[0] == -1 else version[0],
-                b='*' if version[1] == -1 else version[1],
-                c='*' if version[2] == -1 else version[2],
-            ))
+            results.append(
+                (package, version, current_version)
+            )
+        print_formatted_results(results, max_name_size)
 
 
 if __name__ == '__main__':
