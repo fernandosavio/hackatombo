@@ -1,0 +1,1 @@
+Feito para ficar com o código mais simples possível.
